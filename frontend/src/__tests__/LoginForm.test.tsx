@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import { AuthProvider } from '../context/AuthContext';
@@ -16,12 +15,24 @@ jest.mock('react-router-dom', () => ({
 
 const renderLoginForm = () =>
   render(
-    <MemoryRouter>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <LoginForm />
       </AuthProvider>
     </MemoryRouter>
   );
+
+const changeField = async (label: string, value: string) => {
+  await act(async () => {
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  });
+};
+
+const clickButton = async (name: string) => {
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name }));
+  });
+};
 
 describe('LoginForm', () => {
   beforeEach(() => {
@@ -41,8 +52,6 @@ describe('LoginForm', () => {
   });
 
   test('allows switching the selected role tab', async () => {
-    const user = userEvent.setup();
-
     renderLoginForm();
 
     const adminTab = screen.getByRole('button', { name: 'Admin' });
@@ -51,15 +60,13 @@ describe('LoginForm', () => {
     expect(adminTab).toHaveAttribute('aria-pressed', 'true');
     expect(receptionistTab).toHaveAttribute('aria-pressed', 'false');
 
-    await user.click(receptionistTab);
+    await clickButton('Receptionist');
 
     expect(receptionistTab).toHaveAttribute('aria-pressed', 'true');
     expect(adminTab).toHaveAttribute('aria-pressed', 'false');
   });
 
   test('AC-01: submitting valid credentials redirects to role-specific URL', async () => {
-    const user = userEvent.setup();
-
     mockLogin.mockResolvedValueOnce({
       sessionToken: 'test-token-123',
       redirectUrl: '/dashboard/full',
@@ -68,9 +75,9 @@ describe('LoginForm', () => {
 
     renderLoginForm();
 
-    await user.type(screen.getByLabelText('Username'), 'admin');
-    await user.type(screen.getByLabelText('Password'), 'Admin@123');
-    await user.click(screen.getByRole('button', { name: 'Login' }));
+    await changeField('Username', 'admin');
+    await changeField('Password', 'Admin@123');
+    await clickButton('Login');
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
@@ -83,8 +90,6 @@ describe('LoginForm', () => {
   });
 
   test('submitting with another selected role sends that role in the login payload', async () => {
-    const user = userEvent.setup();
-
     mockLogin.mockResolvedValueOnce({
       sessionToken: 'guard-token-123',
       redirectUrl: '/gate-entry',
@@ -93,10 +98,10 @@ describe('LoginForm', () => {
 
     renderLoginForm();
 
-    await user.click(screen.getByRole('button', { name: 'Security Guard' }));
-    await user.type(screen.getByLabelText('Username'), 'guard');
-    await user.type(screen.getByLabelText('Password'), 'Guard@123');
-    await user.click(screen.getByRole('button', { name: 'Login' }));
+    await clickButton('Security Guard');
+    await changeField('Username', 'guard');
+    await changeField('Password', 'Guard@123');
+    await clickButton('Login');
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
@@ -109,8 +114,6 @@ describe('LoginForm', () => {
   });
 
   test('AC-02: invalid credentials shows generic error message', async () => {
-    const user = userEvent.setup();
-
     const error = new Error('Invalid username or password.') as Error & {
       status?: number;
     };
@@ -119,9 +122,9 @@ describe('LoginForm', () => {
 
     renderLoginForm();
 
-    await user.type(screen.getByLabelText('Username'), 'wronguser');
-    await user.type(screen.getByLabelText('Password'), 'wrongpass');
-    await user.click(screen.getByRole('button', { name: 'Login' }));
+    await changeField('Username', 'wronguser');
+    await changeField('Password', 'wrongpass');
+    await clickButton('Login');
 
     await waitFor(() => {
       // ErrorBanner renders with role="alert"
@@ -131,8 +134,6 @@ describe('LoginForm', () => {
   });
 
   test('AC-03: account lockout (HTTP 423) shows lockout alert with remaining time', async () => {
-    const user = userEvent.setup();
-
     const error = new Error('Account locked') as Error & {
       status?: number;
       remainingSeconds?: number;
@@ -143,9 +144,9 @@ describe('LoginForm', () => {
 
     renderLoginForm();
 
-    await user.type(screen.getByLabelText('Username'), 'lockeduser');
-    await user.type(screen.getByLabelText('Password'), 'anypass');
-    await user.click(screen.getByRole('button', { name: 'Login' }));
+    await changeField('Username', 'lockeduser');
+    await changeField('Password', 'anypass');
+    await clickButton('Login');
 
     await waitFor(() => {
       // Lockout div renders with role="alert" and text about temporary lock

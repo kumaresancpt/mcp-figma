@@ -1,5 +1,4 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ResetPasswordForm from '../components/ResetPasswordForm';
 import * as authApi from '../api/auth';
@@ -19,10 +18,22 @@ jest.mock('react-router-dom', () => ({
 
 const renderForm = () =>
   render(
-    <MemoryRouter>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ResetPasswordForm />
     </MemoryRouter>
   );
+
+const changeField = async (label: string, value: string) => {
+  await act(async () => {
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  });
+};
+
+const clickButton = async (name: string) => {
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name }));
+  });
+};
 
 describe('ResetPasswordForm', () => {
   beforeEach(() => {
@@ -40,8 +51,8 @@ describe('ResetPasswordForm', () => {
   test('AC-10: submitting a weak password shows complexity validation error', async () => {
     const { container } = renderForm();
 
-    await userEvent.type(screen.getByLabelText('New Password'), 'weak');
-    await userEvent.type(screen.getByLabelText('Confirm Password'), 'weak');
+    await changeField('New Password', 'weak');
+    await changeField('Confirm Password', 'weak');
 
     // Button is disabled when password is weak; submit the form directly to trigger handleSubmit
     const form = container.querySelector('form') as HTMLFormElement;
@@ -60,15 +71,14 @@ describe('ResetPasswordForm', () => {
 
   test('AC-10: valid password reset calls API with resetToken and navigates to /login', async () => {
     jest.useFakeTimers();
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     mockResetPassword.mockResolvedValueOnce(undefined);
 
     renderForm();
 
-    await user.type(screen.getByLabelText('New Password'), 'NewPass@123');
-    await user.type(screen.getByLabelText('Confirm Password'), 'NewPass@123');
+    await changeField('New Password', 'NewPass@123');
+    await changeField('Confirm Password', 'NewPass@123');
     // Button is enabled when password is valid and passwords match
-    await user.click(screen.getByRole('button', { name: 'Reset Password' }));
+    await clickButton('Reset Password');
 
     await waitFor(() => {
       expect(mockResetPassword).toHaveBeenCalledWith({

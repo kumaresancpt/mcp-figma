@@ -1,5 +1,4 @@
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import ForgotPasswordForm from '../components/ForgotPasswordForm';
 import * as authApi from '../api/auth';
@@ -18,10 +17,22 @@ jest.mock('react-router-dom', () => ({
 
 const renderForm = () =>
   render(
-    <MemoryRouter>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ForgotPasswordForm />
     </MemoryRouter>
   );
+
+const changeField = async (label: string, value: string) => {
+  await act(async () => {
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  });
+};
+
+const clickButton = async (name: string) => {
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name }));
+  });
+};
 
 describe('ForgotPasswordForm', () => {
   beforeEach(() => {
@@ -30,13 +41,12 @@ describe('ForgotPasswordForm', () => {
 
   test('AC-09: submitting email calls forgotPassword API and shows OTP step', async () => {
     mockForgotPassword.mockResolvedValueOnce(undefined);
-    const user = userEvent.setup();
 
     renderForm();
 
     // Step 1: email — label "Email Address" for id="fp-email"
-    await user.type(screen.getByLabelText('Email Address'), 'test@vms.local');
-    await user.click(screen.getByRole('button', { name: 'Send OTP' }));
+    await changeField('Email Address', 'test@vms.local');
+    await clickButton('Send OTP');
 
     await waitFor(() => {
       expect(mockForgotPassword).toHaveBeenCalledWith('test@vms.local');
@@ -51,13 +61,12 @@ describe('ForgotPasswordForm', () => {
   test('AC-09: OTP verification success navigates to /reset-password with resetToken', async () => {
     mockForgotPassword.mockResolvedValueOnce(undefined);
     mockVerifyOtp.mockResolvedValueOnce({ resetToken: 'reset-token-abc' });
-    const user = userEvent.setup();
 
     renderForm();
 
     // Step 1: submit email
-    await user.type(screen.getByLabelText('Email Address'), 'test@vms.local');
-    await user.click(screen.getByRole('button', { name: 'Send OTP' }));
+    await changeField('Email Address', 'test@vms.local');
+    await clickButton('Send OTP');
     await waitFor(() => expect(mockForgotPassword).toHaveBeenCalled());
 
     // Step 2: OTP input appears — label "Enter OTP" for id="otp-input"
@@ -66,7 +75,7 @@ describe('ForgotPasswordForm', () => {
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Enter OTP'), { target: { value: '123456' } });
     });
-    await user.click(screen.getByRole('button', { name: 'Verify OTP' }));
+    await clickButton('Verify OTP');
 
     await waitFor(() => {
       expect(mockVerifyOtp).toHaveBeenCalledWith({ email: 'test@vms.local', otp: '123456' });
@@ -81,13 +90,12 @@ describe('ForgotPasswordForm', () => {
     mockForgotPassword.mockResolvedValueOnce(undefined);
     const error = new Error('Invalid OTP') as Error & { status?: number };
     mockVerifyOtp.mockRejectedValueOnce(error);
-    const user = userEvent.setup();
 
     renderForm();
 
     // Step 1: submit email
-    await user.type(screen.getByLabelText('Email Address'), 'test@vms.local');
-    await user.click(screen.getByRole('button', { name: 'Send OTP' }));
+    await changeField('Email Address', 'test@vms.local');
+    await clickButton('Send OTP');
     await waitFor(() => expect(mockForgotPassword).toHaveBeenCalled());
 
     // Step 2: submit wrong OTP using fireEvent.change for OTP digit filtering
@@ -95,7 +103,7 @@ describe('ForgotPasswordForm', () => {
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Enter OTP'), { target: { value: '999999' } });
     });
-    await user.click(screen.getByRole('button', { name: 'Verify OTP' }));
+    await clickButton('Verify OTP');
 
     await waitFor(() => {
       // ErrorBanner renders with role="alert"; message includes "Invalid OTP" + "2 attempts remaining"
