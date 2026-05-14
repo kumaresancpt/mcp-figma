@@ -4,6 +4,9 @@ import { login } from '../api/auth';
 import { useAuthContext } from '../context/AuthContext';
 import ErrorBanner from './ErrorBanner';
 
+const figmaUserIcon = 'https://www.figma.com/api/mcp/asset/de5fd22d-444b-4502-a62d-e9e8176aea38';
+const figmaEyeIcon  = 'https://www.figma.com/api/mcp/asset/7ce0eb90-1aa4-40f0-a5ce-ffc4a138b78b';
+
 const roles = ['Admin', 'Receptionist', 'Security Guard'] as const;
 const roleValueMap: Record<(typeof roles)[number], string> = {
   Admin: 'Admin',
@@ -13,30 +16,16 @@ const roleValueMap: Record<(typeof roles)[number], string> = {
 
 function UserIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-      <path
-        d="M12 12a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Zm-6.75 7.5a6.75 6.75 0 0 1 13.5 0"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
+    <img src={figmaUserIcon} alt="" className="h-5 w-5 object-contain" aria-hidden="true" />
   );
 }
 
 function EyeIcon({ open }: { open: boolean }) {
-  return open ? (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-      <path
-        d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  ) : (
+  if (open) {
+    return <img src={figmaEyeIcon} alt="" className="h-5 w-5 object-contain" aria-hidden="true" />;
+  }
+  // slashed-eye for hidden state
+  return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
       <path
         d="M3 3 21 21"
