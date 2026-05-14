@@ -4,8 +4,8 @@ import { login } from '../api/auth';
 import { useAuthContext } from '../context/AuthContext';
 import ErrorBanner from './ErrorBanner';
 
-const figmaUserIcon = 'https://www.figma.com/api/mcp/asset/de5fd22d-444b-4502-a62d-e9e8176aea38';
-const figmaEyeIcon  = 'https://www.figma.com/api/mcp/asset/7ce0eb90-1aa4-40f0-a5ce-ffc4a138b78b';
+const figmaUserIcon = '/assets/user-icon.png';
+const figmaEyeIcon  = '/assets/eye-icon.png';
 
 const roles = ['Admin', 'Receptionist', 'Security Guard'] as const;
 const roleValueMap: Record<(typeof roles)[number], string> = {

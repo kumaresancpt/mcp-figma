@@ -1,11 +1,8 @@
 import type { ReactNode } from 'react';
 
-const heroImageUrl =
-  'https://www.figma.com/api/mcp/asset/da0fc139-61de-4259-946b-9d199739779b';
-const figmaLogoIcon =
-  'https://www.figma.com/api/mcp/asset/0f7ac10e-4c34-44d2-a8c1-ddabce7bda50';
-const figmaCptLogo =
-  'https://www.figma.com/api/mcp/asset/b65305a4-f07b-417a-9ada-c011a0fc2a8f';
+const heroImageUrl = '/assets/hero.jpg';
+const figmaLogoIcon = '/assets/logo-icon.png';
+const figmaCptLogo = '/assets/cpt-logo.png';
 
 function BrandMark() {
   return (
