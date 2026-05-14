@@ -1,0 +1,12 @@
+.gstack/
+output/
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+backend/bin/
+backend/obj/
+
+.DS_Store
+Thumbs.db
